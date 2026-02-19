@@ -88,13 +88,11 @@ def get_qc_data(analyzer_name):
     query = text(f"""
     SELECT 
         qc.timestamp,
-        qc.result AS qc_value,
-        r.result AS patient_result
-    FROM results r
-    JOIN qc_results qc ON r.qc_run = qc.id
-    JOIN analyzers a ON r.analyzer = a.id
+        qc.result
+    FROM qc_results qc
+    JOIN analyzers a ON qc.analyzer = a.id
     WHERE a.name = '{analyzer_name}'
-    ORDER BY qc.timestamp, r.result;
+    ORDER BY qc.timestamp, qc.result;
     """)
     
     with engine.connect() as conn:
@@ -155,3 +153,11 @@ def westgard_check (analyzer_name):
 
 
     pass
+
+def perform_westguard_analysis(data: pd.Series, mean: float, sd: float) -> tuple[pd.Series, pd.Series]:
+    # Our rules that we write will live here.
+    # The code here will be developed in the cells below.
+    # And this function will eventually live in src/qc.py
+    warnings_mask = (data > mean + 2*sd) | (data < mean - 2*sd) # Example 1S2 rule
+    failures_mask = (data > mean + 3*sd) | (data < mean - 3*sd) # Example 1S3 rule
+    return warnings_mask, failures_mask
